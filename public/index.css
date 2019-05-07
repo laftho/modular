@@ -38,12 +38,12 @@ button {
   width: 180px;
 }
 
-.nav ul {
+.nav::shadow ul {
   list-style: none;
   padding: 0;
 }
 
-.nav li {
+.nav::shadow li {
   cursor: pointer;
   color: rgba(0, 0, 0, 0.6);
   text-overflow: ellipsis;

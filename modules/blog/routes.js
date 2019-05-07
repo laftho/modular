@@ -42,5 +42,22 @@ export const routes = ({ routers: { $public, $authed }, database }) => {
     
     res.status(200).json(result);
   });
-  
+
+  $authed.delete('/blog/:id', (req, res) => {
+    const results = database.get({ type: 'blog', id: req.params.id });
+
+    const blog = results[req.params.id];
+
+    if (!blog) {
+      return res.status(404).json({ error: 'not found' });
+    }
+
+    if (blog.author !== req.user.username) {
+      return res.status(403).json({ error: 'not authorized' });
+    }
+
+    database.delete({ type: 'blog', id: req.params.id });
+
+    res.status(205).end();
+  });
 };

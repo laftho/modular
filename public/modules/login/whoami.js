@@ -10,7 +10,19 @@ export default class Whoami extends HTMLElement {
     const loading = document.createElement('div');
     loading.innerText = 'loading...';
     shadow.appendChild(loading);
-    
+
+    window.stores.user.attach(user => {
+      if (!user) {
+        const login = new Login();
+        login.addEventListener('loggedin', () => { window.stores.user.load(); });
+        shadow.replaceChild(login, shadow.firstChild);
+      } else {
+        const logout = new Logout(user);
+        logout.addEventListener('loggedout', () => { window.stores.user.load(); });
+        shadow.replaceChild(logout, shadow.firstChild);
+      }
+    });
+    /*
     const whoami = () => {
       shadow.replaceChild(loading, shadow.firstChild);
       
@@ -30,5 +42,7 @@ export default class Whoami extends HTMLElement {
     };
     
     whoami();
+
+     */
   }
 }

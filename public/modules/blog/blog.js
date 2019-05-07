@@ -1,118 +1,103 @@
-export class Blogs {
+export default class Blog extends HTMLElement {
   constructor() {
-    this.list = {};
-    this.listeners = {};
-  }
-  
-  on(event, listener) {
-    if (!this.listeners[event]) this.listeners[event] = {};
-    
-    this.listeners[event][listener] = listener;
-  }
-  
-  remove(event, listener) {
-    delete this.listeners[event][listener];
-  }
-  
-  emit(event, args) {
-    if (!this.listeners[event]) {
-      return;
-    }
-    
-    Object.values(this.listeners[event]).forEach(listener => {
-      try {
-        listener(args);
-      } catch(e) {
-        console.log(e);
+    super();
+
+    const shadow = this.attachShadow({mode: 'open'});
+
+    const container = document.createElement('div');
+    container.setAttribute('class', 'container');
+
+    const loading = document.createElement('div');
+    loading.innerText = 'Loading...';
+    container.appendChild(loading);
+
+    const notfound = () => {
+      const el = document.createElement('div');
+      el.innerText = 'Blog does not exist';
+      container.replaceChild(el, container.firstChild);
+    };
+
+    window.stores.blogs.attach(blogs => {
+      if (!window.location.pathname.startsWith('/blog')) {
+        notfound();
+        return;
       }
-    });
-  }
-}
 
-export function loadBlogs() {
-  fetch(`/api/blogs`)
-    .then(res => { return res.json() })
-    .then(blogs => {
-      window.blogs.list = blogs;
-      window.blogs.emit('updated');
-    });
-}
+      const id = window.location.pathname.split('/blog/')[1];
 
-export function blog() {
-  const id = window.location.pathname.split('/blog/')[1];
-  const content = document.getElementById('content');
-  
-  content.innerHTML = 'loading...';
-  
-  
-  fetch(`/api/blog/${id}`)
-    .then((res) => { return res.json() })
-    .then(blog => {
-      content.innerHTML = `
-        <div id="title" class="title">${blog.htmlTitle}</div>
-        <div class="subtitle">
-          <div class="author">${blog.author}</div>
-          <div class="created">${new Date(blog.created).toDateString()}</div>
-        </div>
-        <div id="summary" class="summary">${blog.htmlSummary}</div>
-        <div id="body" class="body">${blog.htmlContent}</div>
-      `;
-    });
-}
+      const blog = blogs[id];
 
-export function topBlogs() {
-  window.blogs.on('updated', () => {
-    const navitems = document.getElementById('navitems');
-    
-    navitems.innerHTML = Object.keys(window.blogs.list).reduce((acc, key) => {
-      acc += `<li onClick="navTo('/blog/${key}')">${window.blogs.list[key].title}</li>`;
-      return acc;
-    }, '');
-    
-  });
-}
-
-export function makeBlog() {
-  const content = document.getElementById('content');
-  
-  content.innerHTML = `
-    <div id="title" class="title" contentEditable="true">Title</div>
-    <div class="subtitle">
-      <div class="author">moi</div>
-    </div>
-    <div id="summary" class="summary" contentEditable="true">summary</div>
-    <div id="body" class="body" contentEditable="true">content</div>
-    <button onClick='saveBlog()'>Save</button>
-  `;
-}
-
-function saveBlog(id) {
-  
-  const title = document.getElementById('title');
-  const summary = document.getElementById('summary');
-  const content = document.getElementById('body');
-  
-  fetch('/api/blog', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      title: title.innerText,
-      htmlTitle: title.innerHTML,
-      summary: summary.innerText,
-      htmlSummary: summary.innerHTML,
-      content: content.innerText,
-      htmlContent: content.innerHTML
-    })
-  })
-    .then(res => { return res.json() })
-    .then(res => {
-      if (res.error || res.errors) {
-        alert(JSON.stringify(res));
-      } else {
-        navTo(`/blog/${res}`);
+      if (!blog) {
+        notfound();
+        return;
       }
+
+      const blogel = document.createElement('div');
+      blogel.setAttribute('class', 'blog');
+
+
+      const title = document.createElement('div');
+      title.setAttribute('class', 'title');
+      title.innerHTML = blog.htmlTitle;
+
+      const subtitle = document.createElement('div');
+      subtitle.setAttribute('class', 'subtitle');
+
+      const author = document.createElement('div');
+      author.setAttribute('class', 'author');
+      author.innerText = blog.author;
+
+      const created = document.createElement('div');
+      created.setAttribute('class', 'created');
+      created.innerText = new Date(blog.created).toDateString();
+
+      subtitle.appendChild(author);
+      subtitle.appendChild(created);
+
+      const summary = document.createElement('div');
+      summary.setAttribute('class', 'summary');
+      summary.innerHTML = blog.htmlSummary;
+
+      const body = document.createElement('div');
+      body.setAttribute('class', 'body');
+      body.innerHTML = blog.htmlContent;
+
+      blogel.appendChild(title);
+      blogel.appendChild(subtitle);
+      blogel.appendChild(summary);
+      blogel.appendChild(body);
+
+      const controls = document.createElement('div');
+      const empty = document.createElement('div');
+      controls.appendChild(empty);
+
+      blogel.appendChild(controls);
+
+      window.stores.user.attach(user => {
+        if (!user || user.username !== blog.author) {
+          controls.replaceChild(empty, controls.firstChild);
+          return;
+        }
+
+        const del = document.createElement('button');
+        del.innerText = 'Delete';
+        del.addEventListener('click', async () => {
+          del.disabled = true;
+          del.innerText = 'Deleting...';
+          await fetch(`/api/blog/${id}`, {
+            method: 'DELETE'
+          });
+
+          window.stores.blogs.load();
+          window.history.pushState(undefined, undefined, '/');
+        });
+
+        controls.replaceChild(del, controls.firstChild);
+      });
+
+      container.replaceChild(blogel, container.firstChild);
     });
-    
+
+    shadow.appendChild(container);
+  }
 }

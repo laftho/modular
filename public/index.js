@@ -1,59 +1,52 @@
-import { Blogs, loadBlogs, topBlogs } from "./modules/blog/blog.js";
-// import { whoami } from "./login.js";
-
 import modules from './modules/index.js';
 
-Object.keys(modules.components).forEach(name => customElements.define(`app-${name.toLowerCase()}`, modules.components[name]));
+Object.keys(modules.components)
+  .forEach(name => customElements.define(`app-${name.toLowerCase()}`, modules.components[name]));
 
-const routes = () => {
-  if (window.location.pathname === '/blog' || window.location.pathname === '/blog/') {
-    makeBlog();
-  } else if (window.location.pathname.startsWith('/blog')) {
-    blog();
+window.stores = Object.keys(modules.stores).reduce((stores, key) => {
+  stores[key] = new (modules.stores[key])();
+
+  return stores;
+}, {});
+
+(function (history) {
+  const pushState = history.pushState;
+  history.pushState = function (state) {
+    const result = pushState.apply(history, arguments);
+
+    if (typeof history.onpushstate == "function") {
+      history.onpushstate(...arguments);
+    }
+
+    return result;
+  };
+})(window.history);
+
+const routes = (location) => {
+  const route = modules.routes.find(route => route.path(location));
+  const content = document.getElementById('content');
+
+  if (route) {
+    content.replaceChild(new (route.component)(), content.firstChild);
   } else {
-    home();
+    const notfound = document.createElement('p');
+    notfound.innerText = 'Not Found';
+    content.replaceChild(notfound, content.firstChild);
   }
 };
 
-function init() {
-  window.blogs = new Blogs();
-  loadBlogs();
-  topBlogs();
+history.onpushstate = (state, _, location) => {
+  routes(location);
+};
 
-  // whoami();
-  
+function init() {
   const userControls = document.getElementById('usercontrols');
   userControls.appendChild(document.createElement('app-whoami'));
 
-  routes();
-}
+  const nav = document.getElementById('nav');
+  nav.appendChild(document.createElement('app-bloglist'));
 
-function navTo(path) {
-  history.pushState(undefined, undefined, path);
-  init();
-}
-
-(function(history){
-    var pushState = history.pushState;
-    history.pushState = function(state) {
-        if (typeof history.onpushstate == "function") {
-            history.onpushstate({state: state});
-        }
-        // ... whatever else you want to do
-        // maybe call onhashchange e.handler
-        return pushState.apply(history, arguments);
-    };
-})(window.history);
-
-history.onpushstate = event => {
-  routes();
-};
-
-
-function home() {
-  const content = document.getElementById('content');
-  
-  content.innerHTML = `<h2>Home</h2>`;
+  routes(window.location.pathname);
 }
 
 window.app = {
