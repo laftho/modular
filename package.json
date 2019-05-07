@@ -1,0 +1,32 @@
+{
+  "name": "modular",
+  "version": "1.0.0",
+  "description": "example opinionated modular structure for nodejs",
+  "engines": {
+    "node-version": "12.1"
+  },
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --experimental-modules server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laftho/modular.git"
+  },
+  "author": "Thomas LaFreniere",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/laftho/modular/issues"
+  },
+  "homepage": "https://github.com/laftho/modular#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-session": "^1.16.1",
+    "modular.database": "file:database",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "uuid": "^3.3.2"
+  }
+}
