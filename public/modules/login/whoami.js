@@ -22,27 +22,5 @@ export default class Whoami extends HTMLElement {
         shadow.replaceChild(logout, shadow.firstChild);
       }
     });
-    /*
-    const whoami = () => {
-      shadow.replaceChild(loading, shadow.firstChild);
-      
-      fetch(`/api/whoami`)
-        .then(res => { return res.json(); })
-        .then(user => {
-          if (!user) {
-            const login = new Login();
-            login.addEventListener('loggedin', () => { whoami(); });
-            shadow.replaceChild(login, shadow.firstChild);
-          } else {
-            const logout = new Logout(user);
-            logout.addEventListener('loggedout', () => { whoami(); });
-            shadow.replaceChild(logout, shadow.firstChild);
-          }
-        });
-    };
-    
-    whoami();
-
-     */
   }
 }

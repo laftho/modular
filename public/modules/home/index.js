@@ -3,8 +3,7 @@ import routes from './routes.js';
 
 export default {
   components: {
-    Home: Home,
-    //Blog: Blog
+    Home: Home
   },
   routes: routes
 };

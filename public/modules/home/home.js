@@ -1,5 +1,3 @@
-import BlogList from '../blog/list.js';
-
 export default class Home extends HTMLElement {
   constructor() {
     super();
